@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>منصة التحكم والعرض التفاعلي v16</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface-2: #0f172a;
+      --card: #182234;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border: #2e3f5c;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .gate-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at top, #172554, #0f172a 65%);
+    }
+
+    .gate-card {
+      width: 100%;
+      max-width: 430px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 28px 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      text-align: center;
+    }
+
+    .gate-card h1 {
+      margin: 0 0 8px;
+      font-size: 1.4rem;
+    }
+
+    .gate-card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .field-label {
+      display: block;
+      text-align: right;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      background: #24344d;
+      color: var(--text);
+      font-size: 0.93rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.btn-primary { background: var(--primary); color: #061324; }
+    button.btn-success { background: var(--success); color: #052110; }
+    button.btn-warning { background: var(--warning); color: #211402; }
+    button.btn-danger { background: var(--danger); color: #ffffff; }
+    button.active { outline: 2px solid var(--primary); background: #1d3557; }
+
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 25;
+      background: rgba(15, 23, 42, 0.94);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .top-bar-title { font-weight: 700; font-size: 1rem; }
+
+    .room-pill {
+      background: rgba(56, 189, 248, 0.14);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .controller-container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 14px 14px 36px;
+    }
+
+    .nav-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .nav-tab {
+      padding: 10px 8px;
+      font-size: 0.85rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 0;
+    }
+
+    .nav-tab.active {
+      background: var(--primary);
+      color: #061324;
+      border-color: var(--primary);
+    }
+
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .section-header h2 {
+      margin: 0 0 12px;
+      font-size: 1.02rem;
+      color: var(--primary);
+    }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .row-2 > *, .row-3 > *, .row-4 > * { margin-bottom: 0; }
+
+    .helper-text {
+      font-size: 0.84rem;
+      color: var(--muted);
+      margin: 6px 0 10px;
+    }
+
+    .preview-frame {
+      position: relative;
+      display: none;
+      margin-top: 12px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #060a14;
+      touch-action: none;
+    }
+
+    .preview-frame canvas.pdf-canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #ffffff;
+    }
+
+    .preview-frame canvas.draw-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .palette-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .color-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      cursor: pointer;
+    }
+
+    .color-input {
+      width: 46px;
+      height: 38px;
+      padding: 2px;
+      margin-bottom: 0;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0;
+    }
+
+    .filter-chip {
+      width: auto;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      margin-bottom: 0;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+
+    .filter-chip.active {
+      background: var(--primary);
+      color: #061324;
+      border-color: var(--primary);
+    }
+
+    .q-list {
+      max-height: 320px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .q-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .q-card-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .q-card input, .q-card select {
+      padding: 9px 11px;
+      font-size: 0.88rem;
+      margin-bottom: 8px;
+    }
+
+    .pc-screen {
+      width: 100vw;
+      height: 100vh;
+      background: #04070f;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 0 44px;
+    }
+
+    .pc-screen.blackout > *:not(.pc-badge) {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .pc-pdf-box {
+      position: relative;
+      display: none;
+      width: 98vw;
+      max-width: 98vw;
+      margin: 0 auto;
+    }
+
+    .pc-pdf-box canvas.base {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #ffffff;
+      border-radius: 8px;
+    }
+
+    .pc-pdf-box canvas.draw {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .pc-spotlight {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      background: radial-gradient(circle 160px at var(--spot-x, 50%) var(--spot-y, 50%), transparent 0%, transparent 130px, rgba(0, 0, 0, 0.78) 165px);
+    }
+
+    .pc-media-wrap {
+      display: none;
+      width: 96vw;
+      max-width: 1280px;
+      margin: 12px auto;
+      text-align: center;
+    }
+
+    .pc-media-wrap img, .pc-media-wrap video {
+      max-width: 100%;
+      max-height: 82vh;
+      border-radius: 16px;
+      background: #000000;
+    }
+
+    .media-caption {
+      margin-top: 8px;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .pc-compare-wrap {
+      display: none;
+      width: 98vw;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 8px auto;
+    }
+
+    .pc-compare-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .pc-compare-panel canvas {
+      width: 100%;
+      height: auto;
+      background: #ffffff;
+      border-radius: 10px;
+    }
+
+    .pc-q-box {
+      display: none;
+      width: 94vw;
+      max-width: 1000px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 28px;
+      margin: 24px auto;
+      text-align: right;
+    }
+
+    .pc-q-tag {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      margin-bottom: 12px;
+    }
+
+    .pc-q-body {
+      font-size: 1.4rem;
+      line-height: 1.85;
+      margin-bottom: 18px;
+      white-space: pre-wrap;
+    }
+
+    .pc-ans-box {
+      display: none;
+      padding: 18px 20px;
+      border-radius: 14px;
+      background: rgba(34, 197, 94, 0.14);
+      border: 2px solid var(--success);
+      color: #dcfce7;
+      font-size: 1.25rem;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      margin-top: 12px;
+    }
+
+    .pc-fb-box {
+      display: none;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-top: 12px;
+    }
+
+    .pc-fb-box.ok {
+      display: block;
+      background: rgba(34, 197, 94, 0.2);
+      border: 2px solid var(--success);
+      color: #86efac;
+    }
+
+    .pc-fb-box.no {
+      display: block;
+      background: rgba(239, 68, 68, 0.2);
+      border: 2px solid var(--danger);
+      color: #fca5a5;
+    }
+
+    .pc-empty {
+      color: var(--muted);
+      text-align: center;
+      margin-top: 16vh;
+      padding: 20px;
+    }
+
+    .pc-badge {
+      position: fixed;
+      bottom: 10px;
+      left: 12px;
+      font-size: 0.76rem;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.8);
+      padding: 5px 10px;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="gate-wrap" id="roleScreen">
+    <div class="gate-card">
+      <h1>اختر دور هذا الجهاز</h1>
+      <p>تحكم منظم من التليفون، وشاشة عرض صافية للكمبيوتر بعد إدخال رمز الغرفة</p>
+      <label class="field-label" for="startRoomCode">رمز الغرفة</label>
+      <input type="text" id="startRoomCode" value="ROOM-101" />
+      <button type="button" class="btn-primary" onclick="chooseRole('phone')" style="margin-bottom:10px;">📱 شاشة تحكم (التليفون)</button>
+      <button type="button" class="btn-success" onclick="chooseRole('pc')">🖥️ شاشة عرض (الكمبيوتر)</button>
+    </div>
+  </div>
+
+  <div class="gate-wrap hidden" id="pcRoomGate">
+    <div class="gate-card">
+      <h2>أدخل رمز الغرفة</h2>
+      <p>سيتم فتح شاشة العرض مباشرة بعد إدخال الرمز</p>
+      <input type="text" id="pcRoomInput" placeholder="اكتب رمز الغرفة" />
+      <button type="button" class="btn-primary" onclick="enterPcDisplay()">دخول شاشة العرض</button>
+    </div>
+  </div>
+
+  <div class="pc-screen hidden" id="pcPureDisplay">
+    <div class="pc-empty" id="pcWaiting">
+      <h2 id="pcWaitingTitle">في انتظار المحتوى...</h2>
+      <p id="pcWaitingSub">اختر ملف PDF أو صورة أو فيديو أو سؤالاً من شاشة التحكم</p>
+    </div>
+
+    <div class="pc-pdf-box" id="pcStageWrap">
+      <canvas class="base" id="pcPdfCanvas"></canvas>
+      <canvas class="draw" id="pcDrawCanvas"></canvas>
+      <div class="pc-spotlight" id="pcSpotlight"></div>
+    </div>
+
+    <div class="pc-compare-wrap" id="pcCompareGrid">
+      <div class="pc-compare-panel">
+        <div style="color:var(--primary);font-weight:700;margin-bottom:6px;" id="cmpLabelA">ملف PDF الأول</div>
+        <canvas id="cmpCanvasA"></canvas>
+      </div>
+      <div class="pc-compare-panel">
+        <div style="color:var(--success);font-weight:700;margin-bottom:6px;" id="cmpLabelB">ملف PDF الثاني</div>
+        <canvas id="cmpCanvasB"></canvas>
+      </div>
+    </div>
+
+    <div class="pc-media-wrap" id="pcMediaBox">
+      <img id="pcImgView" style="display:none;" alt="صورة" />
+      <video id="pcVideoView" controls playsinline preload="metadata" style="display:none;"></video>
+      <div class="media-caption" id="pcMediaCaption"></div>
+    </div>
+
+    <div class="pc-q-box" id="pcQuestionCard">
+      <div class="pc-q-tag" id="pcQTypeBadge">نوع السؤال</div>
+      <div class="pc-q-body" id="pcQText"></div>
+      <div class="pc-ans-box" id="pcQAnswerBox">
+        <strong style="color:#86efac;display:block;margin-bottom:6px;">💡 الإجابة:</strong>
+        <span id="pcQAnswerText"></span>
+      </div>
+      <div class="pc-fb-box" id="pcQFeedback"></div>
+    </div>
+
+    <div class="pc-badge" id="pcRoomTag"></div>
+  </div>
+
+  <div class="hidden" id="phoneController">
+    <div class="top-bar">
+      <div class="top-bar-title">📱 شاشة التحكم</div>
+      <div class="room-pill" id="phoneRoomLabel">ROOM-101</div>
+    </div>
+
+    <div class="controller-container">
+      <div class="nav-tabs">
+        <button type="button" class="nav-tab active" data-tab="tabMedia" onclick="switchControllerTab('tabMedia', this)">📄 العرض</button>
+        <button type="button" class="nav-tab" data-tab="tabDraw" onclick="switchControllerTab('tabDraw', this)">✏️ القلم</button>
+        <button type="button" class="nav-tab" data-tab="tabQuestions" onclick="switchControllerTab('tabQuestions', this)">❓ الأسئلة</button>
+        <button type="button" class="nav-tab" data-tab="tabCompare" onclick="switchControllerTab('tabCompare', this)">⚖️ مقارنة</button>
+      </div>
+
+      <div id="tabMedia" class="tab-panel">
+        <div class="section-card">
+          <div class="section-header"><h2>الملفات والتنقل بين الصفحات</h2></div>
+          <label class="field-label" for="phonePdfInput">ملف PDF</label>
+          <input type="file" id="phonePdfInput" accept="application/pdf" onchange="handlePhonePdf(event)" />
+          <div class="helper-text" id="phonePdfInfo">لم يتم اختيار ملف PDF بعد</div>
+
+          <div class="row-2" style="margin-bottom:10px;">
+            <div>
+              <label class="field-label" for="phoneImgInput">صورة</label>
+              <input type="file" id="phoneImgInput" accept="image/*" onchange="handlePhoneImage(event)" />
+            </div>
+            <div>
+              <label class="field-label" for="phoneVideoInput">فيديو</label>
+              <input type="file" id="phoneVideoInput" accept="video/*" onchange="handlePhoneVideo(event)" />
+            </div>
+          </div>
+          <div class="helper-text" id="phoneMediaStatus"></div>
+
+          <div class="row-3" style="margin-bottom:10px;">
+            <button type="button" class="btn-primary" id="btnModePdf" onclick="switchMediaMode('pdf')">📄 عرض PDF</button>
+            <button type="button" id="btnModeImg" onclick="switchMediaMode('image')">🖼️ عرض صورة</button>
+            <button type="button" id="btnModeVid" onclick="switchMediaMode('video')">🎬 عرض فيديو</button>
+          </div>
+
+          <div class="row-2" style="margin-bottom:10px;">
+            <button type="button" onclick="changePhonePage(-1)">▶ السابق</button>
+            <button type="button" onclick="changePhonePage(1)">التالي ◀</button>
+          </div>
+
+          <div class="row-2">
+            <input type="number" id="phoneSlideNumber" min="1" placeholder="رقم السلايد" />
+            <button type="button" class="btn-primary" onclick="goToPhoneSlide()">اذهب للسلايد</button>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header"><h2>تحكم الشاشة</h2></div>
+          <div class="row-3">
+            <button type="button" class="btn-danger" id="btnBlackout" onclick="toggleBlackout()">⬛ شاشة سوداء</button>
+            <button type="button" id="btnSpotlight" onclick="toggleSpotlight()">🔦 تسليط ضوء</button>
+            <button type="button" onclick="adjustWidth(98)">↔️ ملء العرض</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tabDraw" class="tab-panel hidden">
+        <div class="section-card">
+          <div class="section-header"><h2>القلم والهايلايت والمعاينة</h2></div>
+          <div class="row-4">
+            <button type="button" id="toolPenBtn" class="active" onclick="setDrawTool('pen')">✏️ قلم</button>
+            <button type="button" id="toolHighlightBtn" onclick="setDrawTool('highlight')">🖍️ هايلايت</button>
+            <button type="button" onclick="undoLastStroke()">↩️ تراجع</button>
+            <button type="button" onclick="clearAnnotations()">🧹 مسح</button>
+          </div>
+
+          <div class="palette-bar">
+            <div class="color-dot" style="background:#ef4444;" onclick="pickQuickColor('#ef4444')"></div>
+            <div class="color-dot" style="background:#22c55e;" onclick="pickQuickColor('#22c55e')"></div>
+            <div class="color-dot" style="background:#38bdf8;" onclick="pickQuickColor('#38bdf8')"></div>
+            <div class="color-dot" style="background:#facc15;" onclick="pickQuickColor('#facc15')"></div>
+            <input type="color" id="drawColor" class="color-input" value="#ef4444" />
+            <select id="drawSize" style="flex:1 1 110px;margin-bottom:0;">
+              <option value="3">رفيع</option>
+              <option value="6" selected>متوسط</option>
+              <option value="18">هايلايت عريض</option>
+            </select>
+          </div>
+
+          <div class="preview-frame" id="phonePreviewBox">
+            <canvas class="pdf-canvas" id="phonePdfCanvas"></canvas>
+            <canvas class="draw-canvas" id="phoneDrawCanvas"></canvas>
+          </div>
+          <div class="helper-text" id="drawHint">ارفع ملف PDF من تبويب «العرض» لتظهر المعاينة وتتمكن من التحديد والهايلايت هنا.</div>
+        </div>
+      </div>
+
+      <div id="tabQuestions" class="tab-panel hidden">
+        <div class="section-card">
+          <div class="section-header"><h2>تفنيد الأسئلة وإظهار الإجابة</h2></div>
+          <textarea id="bulkQuestionsInput" rows="4" placeholder="اكتب أو الصق الأسئلة هنا، مثال:&#10;1- ضع علامة صح أو خطأ: التشفير يحمي البيانات. (الإجابة: صح)&#10;2- اختر: من وحدات الإدخال ... (الإجابة: لوحة المفاتيح)&#10;3- أكمل: وحدة المعالجة المركزية تُسمى ... (الإجابة: CPU)"></textarea>
+
+          <button type="button" class="btn-primary" onclick="parseAndClassifyBulkQuestions()">⚡ تفنيد وتصنيف الأسئلة</button>
+
+          <div class="filter-row">
+            <button type="button" class="filter-chip active" onclick="setQuestionFilter('الكل', this)">الكل</button>
+            <button type="button" class="filter-chip" onclick="setQuestionFilter('صح وغلط', this)">صح وغلط</button>
+            <button type="button" class="filter-chip" onclick="setQuestionFilter('اختر', this)">اختر</button>
+            <button type="button" class="filter-chip" onclick="setQuestionFilter('أكمل', this)">أكمل</button>
+            <button type="button" class="filter-chip" onclick="setQuestionFilter('مصطلح', this)">مصطلح</button>
+            <button type="button" class="filter-chip" onclick="setQuestionFilter('مقالي', this)">مقالي</button>
+          </div>
+
+          <div class="row-3" style="margin-bottom:8px;">
+            <button type="button" class="btn-warning" onclick="revealAnswerOnPc()">💡 أظهر الإجابة</button>
+            <button type="button" class="btn-success" onclick="sendAnswerFeedback(true)">✅ صح</button>
+            <button type="button" class="btn-danger" onclick="sendAnswerFeedback(false)">❌ غلط</button>
+          </div>
+          <button type="button" onclick="sendAction({ type: 'HIDE_QUESTION' })">إخفاء السؤال</button>
+
+          <div class="q-list" id="qBankList"></div>
+        </div>
+      </div>
+
+      <div id="tabCompare" class="tab-panel hidden">
+        <div class="section-card">
+          <div class="section-header"><h2>مقارنة ملفي PDF جنباً إلى جنب</h2></div>
+          <div class="row-2" style="margin-bottom:10px;">
+            <div>
+              <label class="field-label" for="cmpPdfAInput">ملف PDF الأول</label>
+              <input type="file" id="cmpPdfAInput" accept="application/pdf" onchange="handleComparePdf(event, 'A')" />
+            </div>
+            <div>
+              <label class="field-label" for="cmpPdfBInput">ملف PDF الثاني</label>
+              <input type="file" id="cmpPdfBInput" accept="application/pdf" onchange="handleComparePdf(event, 'B')" />
+            </div>
+          </div>
+          <div class="row-3">
+            <button type="button" onclick="stepComparePage(-1)">◀ صفحة سابقة</button>
+            <button type="button" class="btn-primary" onclick="startCompareMode()">⚖️ عرض المقارنة</button>
+            <button type="button" onclick="stepComparePage(1)">صفحة تالية ▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+
+    var currentRoom = "ROOM101";
+    var questionsBank = [];
+    var activeQuestionFilter = "الكل";
+    var currentSentQuestion = null;
+
+    var phonePdfDoc = null;
+    var phoneCurrentPage = 1;
+    var phoneTotalPages = 0;
+    var pcWidthVw = 98;
+    var drawTool = "pen";
+    var isDrawing = false;
+    var pageStrokes = {};
+    var blackoutOn = false;
+    var spotlightOn = false;
+    var comparePage = 1;
+
+    var pcPdfDoc = null;
+    var pcCurrentPage = 1;
+    var pcTotalPages = 0;
+    var pcPageStrokes = {};
+    var pcCmpDocA = null;
+    var pcCmpDocB = null;
+    var pcCmpPage = 1;
+    var pcHasPdf = false;
+    var pcImageUrl = "";
+    var pcVideoUrl = "";
+    var pcVideoName = "";
+    var currentDisplayMode = "none";
+
+    function normalizeRoom(r) {
+      return (r || "").trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "") || "ROOM101";
+    }
+
+    function getRoomKey() {
+      return "STAGE_ROOM_CMD_" + currentRoom;
+    }
+
+    function chooseRole(role) {
+      var codeEl = document.getElementById("startRoomCode");
+      var code = codeEl ? codeEl.value.trim() : "";
+      document.getElementById("roleScreen").classList.add("hidden");
+      if (role === "pc") {
+        document.getElementById("pcRoomGate").classList.remove("hidden");
+        if (code) document.getElementById("pcRoomInput").value = code;
+      } else {
+        currentRoom = normalizeRoom(code || "ROOM-101");
+        document.getElementById("phoneRoomLabel").textContent = currentRoom;
+        document.getElementById("phoneController").classList.remove("hidden");
+      }
+    }
+
+    function enterPcDisplay() {
+      var raw = document.getElementById("pcRoomInput").value.trim();
+      if (!raw) {
+        alert("من فضلك أدخل رمز الغرفة");
+        return;
+      }
+      currentRoom = normalizeRoom(raw);
+      document.getElementById("pcRoomGate").classList.add("hidden");
+      document.getElementById("pcPureDisplay").classList.remove("hidden");
+      document.getElementById("pcRoomTag").textContent = "الغرفة: " + currentRoom;
+    }
+
+    function switchControllerTab(tabId, btnEl) {
+      var panels = document.querySelectorAll(".tab-panel");
+      for (var i = 0; i < panels.length; i++) panels[i].classList.add("hidden");
+      var tabs = document.querySelectorAll(".nav-tab");
+      for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove("active");
+      document.getElementById(tabId).classList.remove("hidden");
+      if (btnEl) btnEl.classList.add("active");
+      if (tabId === "tabDraw" && phonePdfDoc) {
+        setTimeout(renderPhonePage, 50);
+      }
+    }
+
+    function sendAction(payload) {
+      var msg = Object.assign({}, payload, { _ts: Date.now() });
+      try {
+        localStorage.setItem(getRoomKey(), JSON.stringify(msg));
+      } catch (e) {}
+      handlePcReceivedData(msg);
+    }
+
+    window.addEventListener("storage", function (e) {
+      if (e.key === getRoomKey() && e.newValue) {
+        try {
+          handlePcReceivedData(JSON.parse(e.newValue));
+        } catch (err) {}
+      }
+    });
+
+    function switchMediaMode(mode) {
+      sendAction({ type: "SHOW_MEDIA_MODE", mode: mode });
+    }
+
+    function classifyQuestionType(text) {
+      var t = (text || "").toLowerCase();
+      if (t.indexOf("صح") !== -1 && (t.indexOf("خطأ") !== -1 || t.indexOf("غلط") !== -1)) return "صح وغلط";
+      if (t.indexOf("اختر") !== -1 || t.indexOf("اختار") !== -1) return "اختر";
+      if (t.indexOf("أكمل") !== -1 || t.indexOf("اكمل") !== -1 || t.indexOf("الفراغ") !== -1) return "أكمل";
+      if (t.indexOf("المصطلح") !== -1) return "مصطلح";
+      return "مقالي";
+    }
+
+    function parseAndClassifyBulkQuestions() {
+      var raw = document.getElementById("bulkQuestionsInput").value || "";
+      var lines = raw.split(/\r?\n/);
+      var items = [];
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) continue;
+        var ans = "";
+        var qPart = line;
+        var idxAns = line.search(/(?:الإجابة|الاجابة|الحل)\s*[:：]/i);
+        if (idxAns !== -1) {
+          ans = line.slice(idxAns).replace(/^(?:الإجابة|الاجابة|الحل)\s*[:：]\s*/i, "").trim();
+          qPart = line.slice(0, idxAns).trim();
+        }
+        qPart = qPart.replace(/^\d+[-.:)]\s*/, "").trim();
+        items.push({ id: "Q-" + i, type: classifyQuestionType(qPart), text: qPart, answer: ans });
+      }
+      if (!items.length) return;
+      questionsBank = items;
+      renderQuestionsBank();
+    }
+
+    function setQuestionFilter(filterType, btnEl) {
+      activeQuestionFilter = filterType;
+      var chips = document.querySelectorAll(".filter-chip");
+      for (var i = 0; i < chips.length; i++) chips[i].classList.remove("active");
+      if (btnEl) btnEl.classList.add("active");
+      renderQuestionsBank();
+    }
+
+    function renderQuestionsBank() {
+      var listEl = document.getElementById("qBankList");
+      listEl.innerHTML = "";
+      var filtered = questionsBank.filter(function (q) {
+        return activeQuestionFilter === "الكل" ? true : q.type === activeQuestionFilter;
+      });
+      if (!filtered.length) {
+        listEl.innerHTML = "<div class='helper-text'>لا توجد أسئلة في هذا التصنيف</div>";
+        return;
+      }
+      for (var i = 0; i < filtered.length; i++) {
+        (function (q, idx) {
+          var card = document.createElement("div");
+          card.className = "q-card";
+
+          var head = document.createElement("div");
+          head.className = "q-card-head";
+          head.innerHTML = "<span>سؤال #" + (idx + 1) + "</span><span>النوع: <b>" + q.type + "</b></span>";
+
+          var typeSelect = document.createElement("select");
+          var types = ["صح وغلط", "اختر", "أكمل", "مصطلح", "مقالي"];
+          for (var t = 0; t < types.length; t++) {
+            var opt = document.createElement("option");
+            opt.value = types[t];
+            opt.textContent = types[t];
+            if (q.type === types[t]) opt.selected = true;
+            typeSelect.appendChild(opt);
+          }
+          typeSelect.onchange = function () { q.type = typeSelect.value; renderQuestionsBank(); };
+
+          var qTextInput = document.createElement("input");
+          qTextInput.type = "text";
+          qTextInput.value = q.text;
+          qTextInput.onchange = function () { q.text = qTextInput.value; };
+
+          var ansInput = document.createElement("input");
+          ansInput.type = "text";
+          ansInput.placeholder = "اكتب أو عدّل الإجابة هنا...";
+          ansInput.value = q.answer || "";
+          ansInput.onchange = function () { q.answer = ansInput.value; };
+
+          var sendBtn = document.createElement("button");
+          sendBtn.type = "button";
+          sendBtn.className = "btn-primary";
+          sendBtn.textContent = "📤 أظهر السؤال على الشاشة";
+          sendBtn.onclick = function () {
+            currentSentQuestion = { type: typeSelect.value, text: qTextInput.value, answer: ansInput.value };
+            sendAction({ type: "SHOW_QUESTION", qType: currentSentQuestion.type, qText: currentSentQuestion.text });
+          };
+
+          card.appendChild(head);
+          card.appendChild(typeSelect);
+          card.appendChild(qTextInput);
+          card.appendChild(ansInput);
+          card.appendChild(sendBtn);
+          listEl.appendChild(card);
+        })(filtered[i], i);
+      }
+    }
+
+    function revealAnswerOnPc() {
+      sendAction({
+        type: "REVEAL_ANSWER",
+        answer: (currentSentQuestion && currentSentQuestion.answer) || "تم عرض الإجابة النموذجية"
+      });
+    }
+
+    function sendAnswerFeedback(isCorrect) {
+      sendAction({
+        type: "SHOW_FEEDBACK",
+        isCorrect: isCorrect,
+        label: isCorrect ? "✅ إجابة صحيحة (صح)" : "❌ إجابة خاطئة (غلط)"
+      });
+    }
+
+    function bytesToBase64(uint8) {
+      var bin = "";
+      for (var i = 0; i < uint8.length; i++) bin += String.fromCharCode(uint8[i]);
+      return btoa(bin);
+    }
+
+    function base64ToBytes(b64) {
+      var bin = atob(b64);
+      var arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return arr;
+    }
+
+    function handlePhonePdf(event) {
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+      document.getElementById("phonePdfInfo").textContent = "جاري تحميل: " + file.name + "...";
+      var reader = new FileReader();
+      reader.onload = function () {
+        var buf = reader.result;
+        if (window.pdfjsLib) {
+          pdfjsLib.getDocument({ data: buf.slice(0) }).promise.then(function (doc) {
+            phonePdfDoc = doc;
+            phoneTotalPages = doc.numPages;
+            phoneCurrentPage = 1;
+            pageStrokes = {};
+            document.getElementById("drawHint").style.display = "none";
+            renderPhonePage();
+          }).catch(function () {});
+        }
+        sendAction({
+          type: "LOAD_PDF",
+          name: file.name,
+          base64: bytesToBase64(new Uint8Array(buf)),
+          page: 1,
+          widthVw: pcWidthVw
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function handlePhoneImage(event) {
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+      var r = new FileReader();
+      r.onload = function () {
+        document.getElementById("phoneMediaStatus").textContent = "تم تحميل الصورة: " + file.name;
+        sendAction({ type: "SHOW_IMAGE", url: r.result, name: file.name });
+      };
+      r.readAsDataURL(file);
+    }
+
+    function handlePhoneVideo(event) {
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+      document.getElementById("phoneMediaStatus").textContent = "جاري تجهيز الفيديو: " + file.name;
+      var blobUrl = "";
+      try {
+        blobUrl = URL.createObjectURL(file);
+      } catch (e) {}
+
+      if (file.size <= 15 * 1024 * 1024) {
+        var r = new FileReader();
+        r.onload = function () {
+          sendAction({ type: "SHOW_VIDEO", url: r.result || blobUrl, name: file.name });
+        };
+        r.readAsDataURL(file);
+      } else {
+        sendAction({ type: "SHOW_VIDEO", url: blobUrl, name: file.name });
+      }
+    }
+
+    function handleComparePdf(event, slot) {
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+      var r = new FileReader();
+      r.onload = function () {
+        sendAction({
+          type: "LOAD_COMPARE_PDF",
+          slot: slot,
+          name: file.name,
+          base64: bytesToBase64(new Uint8Array(r.result))
+        });
+      };
+      r.readAsArrayBuffer(file);
+    }
+
+    function startCompareMode() {
+      comparePage = 1;
+      sendAction({ type: "SHOW_COMPARE", page: comparePage });
+    }
+
+    function stepComparePage(delta) {
+      comparePage = Math.max(1, comparePage + delta);
+      sendAction({ type: "SHOW_COMPARE", page: comparePage });
+    }
+
+    function renderPhonePage() {
+      if (!phonePdfDoc) return;
+      var box = document.getElementById("phonePreviewBox");
+      var baseCanvas = document.getElementById("phonePdfCanvas");
+      var drawCanvas = document.getElementById("phoneDrawCanvas");
+      box.style.display = "block";
+
+      phonePdfDoc.getPage(phoneCurrentPage).then(function (page) {
+        var containerWidth = Math.min(box.clientWidth || 480, 600);
+        var unscaled = page.getViewport({ scale: 1 });
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var viewport = page.getViewport({ scale: (containerWidth / unscaled.width) * dpr });
+        baseCanvas.width = viewport.width;
+        baseCanvas.height = viewport.height;
+        drawCanvas.width = viewport.width;
+        drawCanvas.height = viewport.height;
+        page.render({ canvasContext: baseCanvas.getContext("2d"), viewport: viewport }).promise.then(function () {
+          document.getElementById("phonePdfInfo").textContent =
+            "سلايد / صفحة " + phoneCurrentPage + " من " + phoneTotalPages;
+          renderStrokesOnCanvas(drawCanvas, pageStrokes[phoneCurrentPage] || []);
+        });
+      });
+    }
+
+    function renderStrokesOnCanvas(canvas, strokes) {
+      var ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (var i = 0; i < strokes.length; i++) {
+        var s = strokes[i];
+        if (!s.points || s.points.length < 2) continue;
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = Math.max(2, s.relSize * canvas.width);
+        ctx.globalAlpha = s.tool === "highlight" ? 0.35 : 0.95;
+        ctx.beginPath();
+        ctx.moveTo(s.points[0].x * canvas.width, s.points[0].y * canvas.height);
+        for (var j = 1; j < s.points.length; j++) {
+          ctx.lineTo(s.points[j].x * canvas.width, s.points[j].y * canvas.height);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    var phoneDrawEl = document.getElementById("phoneDrawCanvas");
+
+    function getNormCoords(e, el) {
+      var rect = el.getBoundingClientRect();
+      var cx = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+      var cy = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
+      return {
+        x: Math.max(0, Math.min(1, (cx - rect.left) / rect.width)),
+        y: Math.max(0, Math.min(1, (cy - rect.top) / rect.height))
+      };
+    }
+
+    phoneDrawEl.addEventListener("pointerdown", function (e) {
+      if (!phonePdfDoc) return;
+      e.preventDefault();
+      var pt = getNormCoords(e, phoneDrawEl);
+      if (spotlightOn) sendAction({ type: "SPOTLIGHT_POS", x: pt.x, y: pt.y });
+      isDrawing = true;
+      var color = document.getElementById("drawColor").value;
+      var sizePx = parseFloat(document.getElementById("drawSize").value) || 6;
+      var relSize = sizePx / (phoneDrawEl.getBoundingClientRect().width || 400);
+      if (!pageStrokes[phoneCurrentPage]) pageStrokes[phoneCurrentPage] = [];
+      pageStrokes[phoneCurrentPage].push({ tool: drawTool, color: color, relSize: relSize, points: [pt] });
+    });
+
+    phoneDrawEl.addEventListener("pointermove", function (e) {
+      if (!phonePdfDoc) return;
+      var pt = getNormCoords(e, phoneDrawEl);
+      if (spotlightOn) sendAction({ type: "SPOTLIGHT_POS", x: pt.x, y: pt.y });
+      if (!isDrawing) return;
+      e.preventDefault();
+      var list = pageStrokes[phoneCurrentPage];
+      if (!list || !list.length) return;
+      list[list.length - 1].points.push(pt);
+      renderStrokesOnCanvas(phoneDrawEl, list);
+    });
+
+    function finishStroke(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+      isDrawing = false;
+      sendAction({ type: "SYNC_STROKES", page: phoneCurrentPage, strokes: pageStrokes[phoneCurrentPage] || [] });
+    }
+    phoneDrawEl.addEventListener("pointerup", finishStroke);
+    phoneDrawEl.addEventListener("pointercancel", finishStroke);
+
+    function setDrawTool(tool) {
+      drawTool = tool;
+      document.getElementById("toolPenBtn").classList.toggle("active", tool === "pen");
+      document.getElementById("toolHighlightBtn").classList.toggle("active", tool === "highlight");
+    }
+
+    function pickQuickColor(hex) {
+      document.getElementById("drawColor").value = hex;
+    }
+
+    function undoLastStroke() {
+      var list = pageStrokes[phoneCurrentPage] || [];
+      list.pop();
+      pageStrokes[phoneCurrentPage] = list;
+      renderStrokesOnCanvas(phoneDrawEl, list);
+      sendAction({ type: "SYNC_STROKES", page: phoneCurrentPage, strokes: list });
+    }
+
+    function clearAnnotations() {
+      pageStrokes[phoneCurrentPage] = [];
+      renderStrokesOnCanvas(phoneDrawEl, []);
+      sendAction({ type: "SYNC_STROKES", page: phoneCurrentPage, strokes: [] });
+    }
+
+    function changePhonePage(delta) {
+      if (!phonePdfDoc) return;
+      var next = Math.max(1, Math.min(phoneCurrentPage + delta, phoneTotalPages));
+      if (next === phoneCurrentPage) return;
+      phoneCurrentPage = next;
+      renderPhonePage();
+      sendAction({ type: "GOTO_PAGE", page: phoneCurrentPage });
+      sendAction({ type: "SYNC_STROKES", page: phoneCurrentPage, strokes: pageStrokes[phoneCurrentPage] || [] });
+    }
+
+    function goToPhoneSlide() {
+      var num = parseInt(document.getElementById("phoneSlideNumber").value, 10);
+      if (!num || num < 1) return;
+      if (phonePdfDoc) {
+        phoneCurrentPage = Math.max(1, Math.min(num, phoneTotalPages));
+        renderPhonePage();
+      }
+      sendAction({ type: "GOTO_PAGE", page: num });
+    }
+
+    function adjustWidth(vw) {
+      pcWidthVw = vw;
+      sendAction({ type: "SET_WIDTH", widthVw: vw });
+    }
+
+    function toggleBlackout() {
+      blackoutOn = !blackoutOn;
+      document.getElementById("btnBlackout").classList.toggle("active", blackoutOn);
+      sendAction({ type: "BLACKOUT", enabled: blackoutOn });
+    }
+
+    function toggleSpotlight() {
+      spotlightOn = !spotlightOn;
+      document.getElementById("btnSpotlight").classList.toggle("active", spotlightOn);
+      sendAction({ type: "SET_SPOTLIGHT", enabled: spotlightOn });
+    }
+
+    function hideAllPcViews() {
+      document.getElementById("pcWaiting").style.display = "none";
+      document.getElementById("pcStageWrap").style.display = "none";
+      document.getElementById("pcCompareGrid").style.display = "none";
+      document.getElementById("pcMediaBox").style.display = "none";
+      document.getElementById("pcQuestionCard").style.display = "none";
+      var vid = document.getElementById("pcVideoView");
+      if (vid && !vid.paused) {
+        try { vid.pause(); } catch (e) {}
+      }
+    }
+
+    function showWaitingState(title, sub) {
+      hideAllPcViews();
+      document.getElementById("pcWaitingTitle").textContent = title;
+      document.getElementById("pcWaitingSub").textContent = sub;
+      document.getElementById("pcWaiting").style.display = "block";
+    }
+
+    function applyPcMode(mode) {
+      currentDisplayMode = mode;
+      if (mode === "pdf") {
+        if (pcHasPdf && pcPdfDoc) {
+          renderPcPage();
+        } else {
+          showWaitingState("وضع عرض PDF", "ارفع ملف PDF من شاشة التحكم ليظهر هنا.");
+        }
+      } else if (mode === "image") {
+        if (pcImageUrl) {
+          hideAllPcViews();
+          var img = document.getElementById("pcImgView");
+          var vid = document.getElementById("pcVideoView");
+          vid.style.display = "none";
+          img.src = pcImageUrl;
+          img.style.display = "inline-block";
+          document.getElementById("pcMediaCaption").textContent = "";
+          document.getElementById("pcMediaBox").style.display = "block";
+        } else {
+          showWaitingState("وضع عرض الصورة", "اختر صورة من شاشة التحكم لتظهر هنا.");
+        }
+      } else if (mode === "video") {
+        if (pcVideoUrl) {
+          hideAllPcViews();
+          var img2 = document.getElementById("pcImgView");
+          var vid2 = document.getElementById("pcVideoView");
+          var cap2 = document.getElementById("pcMediaCaption");
+          img2.style.display = "none";
+          vid2.style.display = "inline-block";
+          vid2.src = pcVideoUrl;
+          vid2.load();
+          cap2.textContent = pcVideoName ? ("الفيديو: " + pcVideoName) : "";
+          document.getElementById("pcMediaBox").style.display = "block";
+          vid2.onerror = function () {
+            cap2.textContent = "تعذر تشغيل هذا الفيديو في المتصفح (قد يكون حجمه كبيراً أو صيغته غير مدعومة).";
+          };
+          vid2.play().catch(function () {});
+        } else {
+          showWaitingState("وضع عرض الفيديو", "اختر ملف فيديو من شاشة التحكم ليظهر ويعمل هنا.");
+        }
+      }
+    }
+
+    function handlePcReceivedData(data) {
+      if (!data || !data.type) return;
+      if (data.type === "LOAD_PDF") {
+        pcHasPdf = true;
+        if (data.widthVw) pcWidthVw = data.widthVw;
+        if (!window.pdfjsLib) {
+          showWaitingState("تم استلام ملف PDF", "تأكد من توفر الاتصال لتحميل عارض PDF.");
+          return;
+        }
+        pdfjsLib.getDocument({ data: base64ToBytes(data.base64) }).promise.then(function (doc) {
+          pcPdfDoc = doc;
+          pcTotalPages = doc.numPages;
+          pcCurrentPage = Math.max(1, Math.min(data.page || 1, pcTotalPages));
+          pcPageStrokes = {};
+          currentDisplayMode = "pdf";
+          renderPcPage();
+        });
+      } else if (data.type === "GOTO_PAGE") {
+        if (!pcPdfDoc) return;
+        pcCurrentPage = Math.max(1, Math.min(data.page, pcTotalPages));
+        currentDisplayMode = "pdf";
+        renderPcPage();
+      } else if (data.type === "RETURN_TO_PDF") {
+        applyPcMode("pdf");
+      } else if (data.type === "SHOW_IMAGE") {
+        pcImageUrl = data.url;
+        applyPcMode("image");
+      } else if (data.type === "SHOW_VIDEO") {
+        pcVideoUrl = data.url;
+        pcVideoName = data.name || "";
+        applyPcMode("video");
+      } else if (data.type === "SHOW_MEDIA_MODE") {
+        applyPcMode(data.mode);
+      } else if (data.type === "LOAD_COMPARE_PDF") {
+        if (!window.pdfjsLib) return;
+        pdfjsLib.getDocument({ data: base64ToBytes(data.base64) }).promise.then(function (doc) {
+          if (data.slot === "A") {
+            pcCmpDocA = doc;
+            document.getElementById("cmpLabelA").textContent = data.name || "ملف PDF الأول";
+          } else {
+            pcCmpDocB = doc;
+            document.getElementById("cmpLabelB").textContent = data.name || "ملف PDF الثاني";
+          }
+        });
+      } else if (data.type === "SHOW_COMPARE") {
+        pcCmpPage = data.page || 1;
+        currentDisplayMode = "compare";
+        renderComparePages();
+      } else if (data.type === "SHOW_QUESTION") {
+        hideAllPcViews();
+        document.getElementById("pcQTypeBadge").textContent = "نوع السؤال: " + (data.qType || "سؤال");
+        document.getElementById("pcQText").textContent = data.qText;
+        document.getElementById("pcQAnswerBox").style.display = "none";
+        document.getElementById("pcQFeedback").className = "pc-fb-box";
+        document.getElementById("pcQuestionCard").style.display = "block";
+      } else if (data.type === "REVEAL_ANSWER") {
+        document.getElementById("pcQAnswerText").textContent = data.answer || "";
+        document.getElementById("pcQAnswerBox").style.display = "block";
+      } else if (data.type === "SHOW_FEEDBACK") {
+        var fb = document.getElementById("pcQFeedback");
+        fb.className = "pc-fb-box " + (data.isCorrect ? "ok" : "no");
+        fb.textContent = data.label;
+      } else if (data.type === "HIDE_QUESTION") {
+        document.getElementById("pcQuestionCard").style.display = "none";
+      } else if (data.type === "SET_WIDTH") {
+        pcWidthVw = data.widthVw || 98;
+        if (pcPdfDoc && currentDisplayMode === "pdf") renderPcPage();
+      } else if (data.type === "BLACKOUT") {
+        document.getElementById("pcPureDisplay").classList.toggle("blackout", !!data.enabled);
+      } else if (data.type === "SET_SPOTLIGHT") {
+        document.getElementById("pcSpotlight").style.display = data.enabled ? "block" : "none";
+      } else if (data.type === "SPOTLIGHT_POS") {
+        var spot = document.getElementById("pcSpotlight");
+        spot.style.setProperty("--spot-x", (data.x * 100).toFixed(1) + "%");
+        spot.style.setProperty("--spot-y", (data.y * 100).toFixed(1) + "%");
+      } else if (data.type === "SYNC_STROKES") {
+        pcPageStrokes[data.page] = data.strokes || [];
+        if (data.page === pcCurrentPage) {
+          renderStrokesOnCanvas(document.getElementById("pcDrawCanvas"), pcPageStrokes[pcCurrentPage] || []);
+        }
+      }
+    }
+
+    function renderPcPage() {
+      if (!pcPdfDoc) return;
+      hideAllPcViews();
+      var wrap = document.getElementById("pcStageWrap");
+      var baseCanvas = document.getElementById("pcPdfCanvas");
+      var drawCanvas = document.getElementById("pcDrawCanvas");
+      wrap.style.display = "block";
+      wrap.style.width = pcWidthVw + "vw";
+      wrap.style.maxWidth = pcWidthVw + "vw";
+
+      pcPdfDoc.getPage(pcCurrentPage).then(function (page) {
+        var unscaled = page.getViewport({ scale: 1 });
+        var targetCssWidth = window.innerWidth * (pcWidthVw / 100);
+        var mult = Math.max(window.devicePixelRatio || 1, 2);
+        var viewport = page.getViewport({ scale: (targetCssWidth / unscaled.width) * mult });
+        baseCanvas.width = viewport.width;
+        baseCanvas.height = viewport.height;
+        drawCanvas.width = viewport.width;
+        drawCanvas.height = viewport.height;
+        page.render({ canvasContext: baseCanvas.getContext("2d"), viewport: viewport }).promise.then(function () {
+          renderStrokesOnCanvas(drawCanvas, pcPageStrokes[pcCurrentPage] || []);
+        });
+      });
+    }
+
+    function renderSingleCompare(doc, canvas, pageNum) {
+      var ctx = canvas.getContext("2d");
+      if (!doc) return Promise.resolve();
+      var p = Math.max(1, Math.min(pageNum, doc.numPages));
+      return doc.getPage(p).then(function (page) {
+        var unscaled = page.getViewport({ scale: 1 });
+        var colW = window.innerWidth * 0.45;
+        var viewport = page.getViewport({ scale: (colW / unscaled.width) * 1.8 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        return page.render({ canvasContext: ctx, viewport: viewport }).promise;
+      });
+    }
+
+    function renderComparePages() {
+      hideAllPcViews();
+      document.getElementById("pcCompareGrid").style.display = "grid";
+      renderSingleCompare(pcCmpDocA, document.getElementById("cmpCanvasA"), pcCmpPage);
+      renderSingleCompare(pcCmpDocB, document.getElementById("cmpCanvasB"), pcCmpPage);
+    }
+  </script>
+</body>
+</html>
